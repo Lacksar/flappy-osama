@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Floppy Osama</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background: skyblue;
+        font-family: Arial, sans-serif;
+      }
+      #gameContainer {
+        position: relative;
+        width: 320px;
+        height: 480px;
+        overflow: hidden;
+        background-color: #486cbc;
+        border: 2px solid black;
+      }
+
+      #background {
+        position: absolute;
+        width: 6400px;
+        height: 100%;
+        background-image: url("sky.png");
+        background-position: left bottom;
+        background-repeat: repeat-x;
+        animation: moveBackground 40000s linear infinite;
+      }
+
+      @keyframes moveBackground {
+        from {
+          left: 0;
+        }
+        to {
+          left: -3200000px;
+        }
+      }
+
+      .bird {
+        position: absolute;
+        width: 50px;
+        height: auto;
+        top: 150px;
+        left: 50px;
+        background: transparent;
+        transform: scaleX(-1);
+      }
+
+      #score {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        font-size: 18px;
+        color: white;
+      }
+
+      .pipe {
+        position: absolute;
+        background: transparent;
+      }
+
+      .pipeTop {
+        height: 150px;
+        top: 0;
+        background-image: url("twintower2.png");
+        background-size: 100% 100%;
+        width: 80px;
+        transform: rotate(180deg);
+      }
+
+      .pipeBottom {
+        height: 200px;
+        bottom: 0;
+        background-image: url("twintower2.png");
+        background-size: 100% 100%;
+        width: 80px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="gameContainer">
+      <div id="background"></div>
+      <div id="score">Score: 0</div>
+      <img src="osama3.png" alt="bird" class="bird" id="bird" />
+      <audio id="gameMusic" src="isis.mp3" loop></audio>
+      <audio class="gover" id="gameOverSound" src="blast.mp3"></audio>
+      <audio class="gover" id="gameOverSound2" src="allahhu.mp3"></audio>
+    </div>
+
+    <script>
+      const gameContainer = document.getElementById("gameContainer");
+      const bird = document.getElementById("bird");
+      const scoreDisplay = document.getElementById("score");
+      const gameMusic = document.getElementById("gameMusic");
+      const gameOverSound = document.getElementById("gameOverSound");
+      const gameOverSound2 = document.getElementById("gameOverSound2");
+
+      let birdY = 150;
+      let gravity = 2;
+      let isGameOver = false;
+      let score = 0;
+      let pipes = [];
+      let isMusicPlaying = false;
+
+      function createPipe() {
+        const pipeGap = 180;
+        const pipeHeight =
+          Math.floor(
+            Math.random() * (gameContainer.offsetHeight - pipeGap - 100)
+          ) + 50;
+
+        const pipeTop = document.createElement("div");
+        pipeTop.classList.add("pipe", "pipeTop");
+        pipeTop.style.height = pipeHeight + "px";
+        pipeTop.style.left = "320px";
+
+        const pipeBottom = document.createElement("div");
+        pipeBottom.classList.add("pipe", "pipeBottom");
+        pipeBottom.style.height =
+          gameContainer.offsetHeight - pipeHeight - pipeGap + "px";
+        pipeBottom.style.left = "320px";
+
+        gameContainer.appendChild(pipeTop);
+        gameContainer.appendChild(pipeBottom);
+        pipes.push({ top: pipeTop, bottom: pipeBottom, passed: false });
+      }
+
+      function movePipes() {
+        pipes.forEach((pipe, index) => {
+          const pipeX = parseInt(pipe.top.style.left);
+          pipe.top.style.left = pipeX - 2 + "px";
+          pipe.bottom.style.left = pipeX - 2 + "px";
+
+          if (pipeX < -40) {
+            pipe.top.remove();
+            pipe.bottom.remove();
+            pipes.splice(index, 1);
+          }
+
+          if (pipeX < 50 && !pipe.passed) {
+            score++;
+            pipe.passed = true;
+            scoreDisplay.textContent = "Score: " + score;
+          }
+
+          const birdRect = bird.getBoundingClientRect();
+          const topRect = pipe.top.getBoundingClientRect();
+          const bottomRect = pipe.bottom.getBoundingClientRect();
+
+          if (
+            birdRect.right > topRect.left &&
+            birdRect.left < topRect.right &&
+            (birdRect.top < topRect.bottom || birdRect.bottom > bottomRect.top)
+          ) {
+            gameOver();
+          }
+        });
+      }
+
+      function gameOver() {
+        isGameOver = true;
+        bird.src = "blast.png";
+        bird.style.zIndex = 200;
+        bird.style.width = "200px";
+        gameMusic.pause();
+        gameOverSound.currentTime = 0.5;
+        gameOverSound.play();
+
+        gameOverSound2.currentTime = 0.5;
+        gameOverSound2.play();
+
+        setTimeout(() => {
+          pipeTop.style.backgroundImage = "url(blast.png)";
+          setTimeout(() => {
+            pipeTop.remove();
+          }, 500);
+        }, 1000);
+
+        setTimeout(() => {
+          alert("Game Over! Score: " + score);
+          window.location.reload();
+        }, 100);
+      }
+
+      function gameLoop() {
+        if (isGameOver) return;
+
+        if (!isMusicPlaying) {
+          gameMusic.play();
+          isMusicPlaying = true;
+        }
+
+        birdY += gravity;
+        bird.style.top = birdY + "px";
+
+        if (
+          birdY > gameContainer.offsetHeight - bird.offsetHeight ||
+          birdY < 0
+        ) {
+          gameOver();
+        }
+
+        movePipes();
+        requestAnimationFrame(gameLoop);
+      }
+
+      function flap() {
+        if (isGameOver) return;
+        birdY -= 30;
+      }
+
+      document.addEventListener("keydown", flap);
+      document.addEventListener("touchstart", function (event) {
+        event.preventDefault();
+        flap();
+      });
+
+      setInterval(createPipe, 2000);
+      gameLoop();
+    </script>
+  </body>
+</html>
