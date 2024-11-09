@@ -34,7 +34,7 @@
         background-image: url("sky.png");
         background-position: left bottom;
         background-repeat: repeat-x;
-        animation: moveBackground 40000s linear infinite;
+        animation: moveBackground 40s linear infinite;
       }
 
       @keyframes moveBackground {
@@ -42,7 +42,7 @@
           left: 0;
         }
         to {
-          left: -3200000px;
+          left: -3200px;
         }
       }
 
@@ -85,6 +85,22 @@
         background-size: 100% 100%;
         width: 80px;
       }
+
+      #restartButton {
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 10px 20px;
+        font-size: 18px;
+        background-color: red;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        display: none;
+        z-index: 1000;
+      }
     </style>
   </head>
   <body>
@@ -95,6 +111,7 @@
       <audio id="gameMusic" src="isis.mp3" loop></audio>
       <audio class="gover" id="gameOverSound" src="blast.mp3"></audio>
       <audio class="gover" id="gameOverSound2" src="allahhu.mp3"></audio>
+      <button id="restartButton">Restart</button>
     </div>
 
     <script>
@@ -104,6 +121,8 @@
       const gameMusic = document.getElementById("gameMusic");
       const gameOverSound = document.getElementById("gameOverSound");
       const gameOverSound2 = document.getElementById("gameOverSound2");
+      const restartButton = document.getElementById("restartButton");
+      const background = document.getElementById("background");
 
       let birdY = 150;
       let gravity = 2;
@@ -175,21 +194,11 @@
         gameMusic.pause();
         gameOverSound.currentTime = 0.5;
         gameOverSound.play();
-
         gameOverSound2.currentTime = 0.5;
         gameOverSound2.play();
 
-        setTimeout(() => {
-          pipeTop.style.backgroundImage = "url(blast.png)";
-          setTimeout(() => {
-            pipeTop.remove();
-          }, 500);
-        }, 1000);
-
-        setTimeout(() => {
-          alert("Game Over! Score: " + score);
-          window.location.reload();
-        }, 100);
+        background.style.animationDuration = "0s";
+        restartButton.style.display = "block";
       }
 
       function gameLoop() {
@@ -227,6 +236,10 @@
 
       setInterval(createPipe, 2000);
       gameLoop();
+
+      restartButton.addEventListener("click", () => {
+        window.location.reload();
+      });
     </script>
   </body>
 </html>
